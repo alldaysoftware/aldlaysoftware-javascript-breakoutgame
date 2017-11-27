@@ -1,0 +1,283 @@
+<html>	<!--start html tag-->
+<head>	<!--start head tag-->
+    <meta charset="utf-8" />
+    <title>80 Games Busting Bricks</title>	<!--title tags-->
+    
+</head>	<!--close head tags--> 
+<body>
+
+<canvas id="myCanvas" width="725" height="420"></canvas>
+<a href="index.html">Return to Main Menu</a> <!--Relative link to index.html aka "main menu"-->	
+<br/>
+
+<script>	//start script tags
+	//variable declarations
+	 var highScore = localStorage.getItem("HighScore");
+    var canvas = document.getElementById("myCanvas");
+	 var everything = [];
+    var ctx = canvas.getContext("2d");
+    var ballRadius = 14;
+    var x = canvas.width/2;	//canvas height
+    var y = canvas.height-30;
+    var dx = 2;	//ball x velocity
+    var dy = -2;	//ball y velocity
+    var paddleHeight = 10;
+    var paddleWidth = 100;
+    var paddleX = (canvas.width-paddleWidth)/2;
+    var rightPressed = false;
+    var leftPressed = false;
+    var brickRowCount = 8;			//variable that holds brick rows
+    var brickColumnCount = 4;	//variable that holds brick columns
+    var brickWidth = 75;
+    var brickHeight = 20;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var score = 0;
+    var starttime;
+    var s = 1;
+	 var m = 0;
+	 var myVar = setInterval(myTimer, 1000);
+	
+	var background = new Image();	//variable that stores image as a JS object
+	background.src = "background.gif";	
+	
+	//function to refresh page....will be turned into a button later in the code
+	function refresh(){	//function to create refresh page button so that user can refresh page whenever desired. 
+		document.location.reload();
+	}
+	
+    var bricks = [];	//create array for bricks
+    for(c=0; c<brickColumnCount; c++) {		//draw bricks to canvas
+        bricks[c] = [];
+        for(r=0; r<brickRowCount; r++) {
+            bricks[c][r] = { x: 0, y: 0, status: 1 };	//brick x and y location
+        }
+    }
+
+    document.addEventListener("keydown", keyDownHandler, false);	//Keyboard event listener
+    document.addEventListener("keyup", keyUpHandler, false);	//keyboard event listener
+    document.addEventListener("mousemove", mouseMoveHandler, false);	//mouse event
+	
+	//functions for arrow keys. True when pressed down and false when released. 
+    function keyDownHandler(e) {
+        if(e.keyCode == 39) {
+            rightPressed = true;
+        }
+        else if(e.keyCode == 37) {
+            leftPressed = true;
+        }
+    }
+    function keyUpHandler(e) {
+        if(e.keyCode == 39) {
+            rightPressed = false;
+        }
+        else if(e.keyCode == 37) {
+            leftPressed = false;
+        }
+    }
+    //function to detect mouse movement to move paddle x direction
+    function mouseMoveHandler(e) {
+        var relativeX = e.clientX - canvas.offsetLeft;
+        if(relativeX > 0 && relativeX < canvas.width) {
+            paddleX = relativeX - paddleWidth/2;
+        }
+    }
+    //collision detection fn perhaps the most important code that detects when bricks have been hit and displays winning message when they have all been collided 
+    function collisionDetection() {
+        for(c=0; c<brickColumnCount; c++) {
+            for(r=0; r<brickRowCount; r++) {
+                var b = bricks[c][r];
+                if(b.status == 1) {
+                    if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+                        dy = -dy;
+                        b.status = 0;
+                        score++;
+                        if(score == brickRowCount*brickColumnCount) {
+                         alert("YOU WIN, CONGRATS!");	//winner message
+                         ballRadius=0;
+                         drawBall();
+                         paddleWidth = 0;
+                         drawPaddle();
+                           /* document.location.reload();*/
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#CFB53B";
+        ctx.fill();
+        ctx.closePath();
+    }
+    function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#CFB53B";
+        ctx.fill();
+        ctx.closePath();
+    }
+    //draw bricks fn stores bricks in array of arrays  to be drawn to canvas
+    function drawBricks() {
+        for(c=0; c<brickColumnCount; c++) {
+            for(r=0; r<brickRowCount; r++) {
+                if(bricks[c][r].status == 1) {
+                    var brickX = (r*(brickWidth+brickPadding))+brickOffsetLeft;
+                    var brickY = (c*(brickHeight+brickPadding))+brickOffsetTop;
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "#CFB53B";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+    //fn that stores values for score high score and timer at the top of canvas
+    function drawTop() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText("Score: "+score+ "    High Score: "+localStorage.getItem("HighScore")+"      Timer: "+m+ ":" + s, 8, 20);
+    }
+
+	function Picture (sx,sy,swidth,sheight,imga) {	//start Picture fn to setup picture object
+		this.sx = sx;	//set sx property
+		this.sy = sy;	//set sy property
+		this.img = imga;	//set img property to imga
+		this.swidth = swidth;	//set swidth property
+		this.sheight = sheight;	//set sheight property
+		this.draw = drawAnImage;	//draw method for objects of this type
+	}	//close Picture fn
+
+	function drawAnImage() {	//start drawAnImage fn
+		ctx.drawImage(this.img,this.sx,this.sy,this.swidth,this.sheight);	//draw image using these properties
+	}	//close drawAnImage fn
+
+	var target = new Picture(10,10,10,10,background);	//construct new Picture object and assign to target 
+	var target1 = new Picture(10,10,20,10,background);	//construct new Picture object and assign to target 
+	
+		everything.splice(0, 1, target);
+		everything.push(target1);
+
+
+		
+function drawall() {	//start drawall fn
+//drawall erases the whole canvas and then draws everything in everything array
+	ctx.clearRect(0,0,cwidth,cheight);
+	var i;	//declare var i for the loop
+	for (i=0;i<everything.length;i++) {	//for each item in everything array
+		everything[i].draw();	//invoke objects for draw method 
+	}	//close for loop
+}	//close drawall fn	
+
+    function draw() {	//draw fn draws all objects to canvas and detects when the player loses
+		var out;       
+       
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        drawBall();
+        drawPaddle();
+        drawTop();
+        collisionDetection();
+		
+
+        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+            dx = -dx;
+        }
+        if(y + dy < ballRadius) {
+            dy = -dy;
+        }
+        else if( (y) > canvas.height-ballRadius) {
+            if(x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+            }
+            else{
+                out = "Game Over! Refresh page and try again....";	//if the ball does not hit the paddle then game over
+					ctx.fillText(out,10,300);
+					paddleWidth = 0;	//remove paddle from canvas after loss
+					drawPaddle();
+					highScoreFct();
+            }
+        }
+
+        if(rightPressed && paddleX < canvas.width-paddleWidth) {
+            paddleX += 7;
+        }
+        else if(leftPressed && paddleX > 0) {
+            paddleX -= 7;
+        }
+
+        x += dx;
+        y += dy;
+    }
+    //high score fn to store high score to local storage
+    function highScoreFct () {
+		if(score > highScore){
+			highScore = parseInt(score);
+			localStorage.setItem('HighScore', highScore);
+		}
+    	
+    }
+
+    setInterval(draw, 10);
+    drawall();
+    
+    //timer fn
+	function myTimer() {
+		s++;
+		if(s < 10){
+			s = "0" + s;
+		}
+		if(s == 60){
+			m++;
+			s = s - 60;
+		}
+    
+		document.getElementById("timer").innerHTML = m + ":" + s;
+		document.getElementById("highScore").innerHTML = localStorage.getItem('HighScore');	//access local storage for high score
+	}    
+    
+	
+	//setup timer to start at 0 seconds
+   step(new Clock());
+   document.f.count.value = "0";
+   document.f.elapsed.value = "";
+   starttime = new Date();
+   starttime = Number(starttime.getTime());
+   
+   
+</script>	<!--end script-->
+
+<h1>80 Games Busting Bricks</h1>
+<h3>Use the mouse or arrow keys to move the paddle and hit all the bricks to win! Miss the ball and lose :(</h3>
+<button onClick= "refresh()">Refresh the Page</button>
+
+<style> /*start style tags*/
+	{ padding: 0; margin: 0; } canvas { background-image: url("background.png"); border: white; display: block; margin: 0 auto; }
+	body	{
+		background-image: url("background.jpg");
+	}
+	h1	{
+		color: white;	
+	}
+	h3	{
+		color: white;	
+	}
+</style>	<!--style tags for canvas-->
+
+</body>	<!--close body tags-->
+</html>	<!--close html tags-->
+
+<!--
+DeLon R. Lewis
+MSSE 500, Nano Game prototype
+The following code is a prototype for my final JavaScript HTML project. To win, use the mouse within the canvas to bounce the ball on the paddle to bust all of the bricks laid out on the canvas. If players miss the paddle they lose. 
+September 20, 2017
+- Code derived and modified from MDN Web Docs hosted by the Mozilla Foundation. "2D breakout game using pure JavaScript" (2017)
+-->
